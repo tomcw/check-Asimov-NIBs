@@ -9,6 +9,15 @@ def SaveNIB(url, req):
 	f.write(req.content)
 	f.close()
 
+def SaveNIBZIP(url, req):
+	fname = 'unknown.nib.zip'
+	if url.find('/'):
+		fname = url.rsplit('/', 1)[1]
+
+	f = open('NIBZIPs/'+fname, 'wb')
+	f.write(req.content)
+	f.close()
+
 #==================
 
 def GetAndCheckNIB(line):
@@ -16,6 +25,11 @@ def GetAndCheckNIB(line):
 	url = base_url + line.split('/', 1)[1]
 	req = requests.get(url, allow_redirects=True)
 	savedFile = False
+
+	if line.rfind('.zip') >= 0:
+		SaveNIBZIP(url, req)
+		print("Info: Skipping zipped NIB")
+		return
 
 	# Quick NIB sanity check
 	NIB1_TRACK_SIZE = 0x1A00
@@ -46,7 +60,7 @@ def GetAndCheckNIB(line):
 
 print('Check Asimov NIBs')
 
-f_in = open('site_index.txt','r')
+f_in = open('site_index.txt','r')	# if not found, then an OSError is raised (FileNotFoundError)
 c=0
 for line in f_in.readlines():
 	# eg. line = './images/games/action/Arcticfox.nib'
@@ -55,6 +69,5 @@ for line in f_in.readlines():
 		line = line.split('\n', 1)[0]	# remove trailing newline
 		print('{:04d}'.format(c) + ': ' + line)
 		GetAndCheckNIB(line)
-		if c == 20: break	# debug: just 20
 f_in.close()
 print('total = ' + str(c))
